@@ -1,0 +1,99 @@
+:root{
+  --bg1:#0b0f2a; --bg2:#1a0f3d; --panel:rgba(255,255,255,.06); --line:rgba(255,255,255,.12);
+  --text:#f4f6ff; --sub:#9aa3c7; --pink:#ff4fa3; --cyan:#36e0ff; --yellow:#ffd23f; --green:#58f0a0;
+}
+@media (prefers-color-scheme: light){ :root:not([data-theme="dark"]){ } } /* 常にダークUI */
+*{box-sizing:border-box}
+html,body{margin:0;min-height:100%}
+body{
+  background:radial-gradient(1200px 600px at 50% -10%,#2b1466 0%,transparent 60%),linear-gradient(180deg,var(--bg2),var(--bg1));
+  color:var(--text); font-family:"Noto Sans JP",system-ui,sans-serif; -webkit-font-smoothing:antialiased;
+}
+button{font:inherit;cursor:pointer;border:0;border-radius:999px;padding:.7em 1.4em;font-weight:700}
+button.primary{background:linear-gradient(90deg,var(--pink),#ff8a3d);color:#fff;box-shadow:0 6px 24px rgba(255,79,163,.35)}
+button.ghost{background:var(--panel);color:var(--text);border:1px solid var(--line)}
+button:disabled{opacity:.5;cursor:default}
+input[type=range]{accent-color:var(--cyan);vertical-align:middle}
+code{background:rgba(255,255,255,.1);padding:.1em .4em;border-radius:6px}
+
+.topbar{display:flex;align-items:center;justify-content:space-between;padding:14px 16px;border-bottom:1px solid var(--line);position:sticky;top:0;background:rgba(11,15,42,.8);backdrop-filter:blur(8px);z-index:5}
+.logo{font:900 22px "Orbitron","Noto Sans JP",sans-serif;letter-spacing:.04em}
+.logo span{color:var(--yellow)}
+.tag{font-size:12px;color:var(--sub)}
+
+main{max-width:980px;margin:0 auto;padding:16px}
+.view{display:none}
+.view.active{display:block;animation:fade .35s ease}
+@keyframes fade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+.sec-title{font:900 26px "Orbitron",sans-serif;margin:8px 0 4px;letter-spacing:.06em;color:var(--cyan)}
+.hint{color:var(--sub);font-size:13px;margin:4px 0 16px}
+.howto{margin-top:24px;color:var(--sub);font-size:13px;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:12px 16px}
+.howto summary{cursor:pointer;color:var(--text);font-weight:700}
+
+/* 曲一覧（ジャケット風タイル） */
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:16px}
+.card{position:relative;border:0;padding:0;border-radius:18px;overflow:hidden;text-align:left;color:#fff;min-height:190px;
+  background:linear-gradient(145deg,hsl(var(--h) 90% 60%),hsl(calc(var(--h) + 40) 80% 35%));
+  box-shadow:0 10px 30px rgba(0,0,0,.35);transition:transform .15s}
+.card:hover,.card:focus-visible{transform:translateY(-3px) scale(1.02)}
+.card::before{content:"";position:absolute;inset:0;background:repeating-linear-gradient(45deg,rgba(255,255,255,.08) 0 2px,transparent 2px 14px)}
+.card .inner{position:relative;padding:16px;height:100%;display:flex;flex-direction:column;justify-content:space-between;min-height:190px}
+.card .t{font-weight:900;font-size:19px;line-height:1.3;text-shadow:0 2px 8px rgba(0,0,0,.4)}
+.card .a{font-size:12px;opacity:.85}
+.card .best{align-self:flex-start;background:rgba(0,0,0,.35);border-radius:999px;padding:4px 10px;font-size:12px;font-weight:700}
+.card .dur{font-size:12px;opacity:.85}
+
+/* 歌唱画面 */
+.play-head{display:flex;align-items:center;gap:12px;justify-content:space-between;flex-wrap:wrap}
+.song-title{font-weight:900;font-size:16px;flex:1;text-align:center;min-width:120px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.combo{font:900 20px "Orbitron",sans-serif;color:var(--yellow);min-width:90px;text-align:right}
+.combo.pop{animation:pop .3s ease}
+@keyframes pop{0%{transform:scale(1.4)}100%{transform:scale(1)}}
+.lyric-box{margin:12px 0 8px;min-height:72px;text-align:center;background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:12px}
+.lyric-now{font-size:clamp(18px,4vw,26px);font-weight:900;color:#fff;text-shadow:0 0 14px rgba(54,224,255,.5)}
+.lyric-next{font-size:14px;color:var(--sub);margin-top:4px}
+.stage{position:relative;background:#070a1d;border:1px solid var(--line);border-radius:18px;overflow:hidden;box-shadow:inset 0 0 40px rgba(0,0,0,.6)}
+#pitch{display:block;width:100%;height:300px}
+.judge{position:absolute;left:50%;top:14px;transform:translateX(-50%);font:900 26px "Orbitron",sans-serif;color:var(--green);text-shadow:0 0 12px currentColor;pointer-events:none;opacity:0}
+.judge.show{animation:judge .8s ease forwards}
+.judge.miss{color:var(--pink)}
+@keyframes judge{0%{opacity:0;transform:translate(-50%,10px) scale(.7)}20%{opacity:1;transform:translate(-50%,0) scale(1.1)}100%{opacity:0;transform:translate(-50%,-14px)}}
+.countdown{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font:900 96px "Orbitron",sans-serif;background:rgba(7,10,29,.6);color:#fff;text-shadow:0 0 30px var(--pink)}
+.countdown.hidden{display:none}
+.countdown.tick{animation:tick .9s ease}
+@keyframes tick{0%{transform:scale(1.8);opacity:0}30%{opacity:1}100%{transform:scale(.8);opacity:0}}
+.live{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:12px}
+.live-item{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:10px;text-align:center}
+.live-item span{display:block;font-size:12px;color:var(--sub)}
+.live-item b{font:900 22px "Orbitron",sans-serif;color:var(--cyan)}
+.controls{display:flex;align-items:center;gap:12px;justify-content:space-between;flex-wrap:wrap;margin-top:12px;font-size:14px;color:var(--sub)}
+.msg{color:var(--yellow);font-size:14px;min-height:1.4em}
+
+/* 結果 */
+.result-card{background:var(--panel);border:1px solid var(--line);border-radius:22px;padding:22px;box-shadow:0 20px 60px rgba(0,0,0,.4)}
+.res-title{font-weight:900;font-size:18px;color:var(--sub)}
+.score-row{display:flex;align-items:center;gap:16px;justify-content:center;margin:10px 0}
+.score{font:900 clamp(56px,14vw,96px) "Orbitron",sans-serif;color:var(--yellow);text-shadow:0 0 24px rgba(255,210,63,.45);font-variant-numeric:tabular-nums}
+.rank{font:900 64px "Orbitron",sans-serif;width:96px;height:96px;display:grid;place-items:center;border-radius:20px;background:linear-gradient(145deg,var(--pink),#7b2cff);transform:rotate(-8deg);box-shadow:0 0 28px rgba(255,79,163,.6)}
+.rank.stamp{animation:stamp .5s cubic-bezier(.2,1.6,.4,1)}
+@keyframes stamp{0%{transform:scale(3) rotate(-8deg);opacity:0}100%{transform:scale(1) rotate(-8deg);opacity:1}}
+.stars{text-align:center;font-size:30px;color:var(--yellow);letter-spacing:4px;min-height:1.2em}
+.bars{margin-top:16px;display:grid;gap:10px}
+.bar-row{display:grid;grid-template-columns:90px 1fr 56px;align-items:center;gap:10px;font-size:14px}
+.bar{height:12px;background:rgba(255,255,255,.1);border-radius:999px;overflow:hidden}
+.bar i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--cyan),var(--green));border-radius:999px;transition:width 1s ease}
+.bar-row b{text-align:right;font-variant-numeric:tabular-nums}
+.sub{font-size:14px;color:var(--cyan);margin:20px 0 8px;letter-spacing:.05em}
+.expr{list-style:none;padding:0;margin:0;display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px;font-size:14px}
+.expr li{background:rgba(0,0,0,.25);border-radius:12px;padding:8px 10px;display:flex;justify-content:space-between;gap:6px;white-space:nowrap}
+.expr li.na{opacity:.45}
+#res-chart{display:block;width:100%;height:110px;background:#070a1d;border-radius:12px}
+.comments{padding-left:1.2em;margin:0;line-height:1.8}
+.buttons{display:flex;gap:12px;justify-content:center;margin-top:22px;flex-wrap:wrap}
+
+@media (max-width:560px){
+  main{padding:12px}
+  #pitch{height:240px}
+  .bar-row{grid-template-columns:76px 1fr 50px}
+  .controls{justify-content:center}
+}

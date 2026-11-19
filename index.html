@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>うたジャッジ｜カラオケ採点</title>
+<meta name="description" content="音程・こぶし・しゃくり・ビブラート・フォールまで採点するブラウザカラオケ">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;700;900&family=Orbitron:wght@700;900&display=swap">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<header class="topbar">
+  <div class="logo">うた<span>ジャッジ</span></div>
+  <div class="tag">ブラウザ採点カラオケ</div>
+</header>
+
+<main>
+  <!-- 曲選択 -->
+  <section id="view-list" class="view active">
+    <h2 class="sec-title">SELECT SONG</h2>
+    <p class="hint">イヤホン推奨。マイクの使用を許可すると採点できます。</p>
+    <div id="song-grid" class="grid"></div>
+    <details class="howto">
+      <summary>曲の追加方法</summary>
+      <p>GitHubの <code>songs/</code> に新しいフォルダを作り、<code>source.wav</code>（または mp3）を入れてpushするだけで、解析して曲一覧に追加されます。詳しくはREADMEを参照してください。</p>
+    </details>
+  </section>
+
+  <!-- 歌唱画面 -->
+  <section id="view-play" class="view">
+    <div class="play-head">
+      <button id="btn-quit" class="ghost">← 曲選択</button>
+      <div id="play-title" class="song-title"></div>
+      <div id="combo" class="combo"></div>
+    </div>
+    <div class="lyric-box">
+      <div id="lyric-now" class="lyric-now"></div>
+      <div id="lyric-next" class="lyric-next"></div>
+    </div>
+    <div class="stage">
+      <canvas id="pitch"></canvas>
+      <div id="judge" class="judge"></div>
+      <div id="countdown" class="countdown hidden"></div>
+    </div>
+    <div class="live">
+      <div class="live-item"><span>あなたの音</span><b id="live-note">--</b></div>
+      <div class="live-item"><span>お手本</span><b id="ref-note">--</b></div>
+      <div class="live-item"><span>経過</span><b id="elapsed">0:00</b></div>
+    </div>
+    <div class="controls">
+      <label>伴奏の音量 <input type="range" id="guide-vol" min="0" max="1" step="0.05" value="0.8"></label>
+    </div>
+    <p id="play-msg" class="msg"></p>
+  </section>
+
+  <!-- 結果画面 -->
+  <section id="view-result" class="view">
+    <div class="result-card">
+      <div id="res-title" class="res-title"></div>
+      <div class="score-row">
+        <div id="res-score" class="score">0.0</div>
+        <div id="res-rank" class="rank">D</div>
+      </div>
+      <div id="res-stars" class="stars"></div>
+      <div id="res-bars" class="bars"></div>
+      <h3 class="sub">判定</h3>
+      <ul id="res-expr" class="expr"></ul>
+      <h3 class="sub">ピッチ判定（お手本の音ごと）</h3>
+      <canvas id="res-chart"></canvas>
+      <h3 class="sub">コメント</h3>
+      <ul id="res-comments" class="comments"></ul>
+      <div class="buttons">
+        <button id="btn-retry" class="primary">もう一度</button>
+        <button id="btn-back" class="ghost">曲選択へ</button>
+      </div>
+    </div>
+  </section>
+</main>
+
+<script type="module" src="js/app.js"></script>
+</body>
+</html>
