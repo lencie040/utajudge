@@ -19,6 +19,8 @@ const app = {
   playing: false,
   streak: 0, bestStreak: 0, lastJudgeAt: -1,
   rafId: 0,
+  outLat: 0,       // 再生の出力遅延（秒）
+  comp: 0.1,       // 歌声の時刻補正（秒）＝出力遅延＋マイク遅延
 };
 
 // ---------- 画面切り替え ----------
@@ -106,6 +108,9 @@ async function startMic() {
     audio: { echoCancellation: true, noiseSuppression: false, autoGainControl: false },
   });
   app.ctx = new (window.AudioContext || window.webkitAudioContext)();
+  app.outLat = app.ctx.outputLatency || app.ctx.baseLatency || 0.05;
+  // 初期値：出力遅延＋マイク遅延の一般的な目安（60ms）＋解析窓の半分（23ms）
+  setComp(Math.round((app.outLat + 0.06 + 0.023) * 1000));
   const src = app.ctx.createMediaStreamSource(app.stream);
   app.analyser = app.ctx.createAnalyser();
   app.analyser.fftSize = 2048;
@@ -120,6 +125,13 @@ function stopMic() {
   app.stream = null; app.ctx = null; app.analyser = null;
 }
 
+// マイクのズレ補正（ミリ秒）
+function setComp(ms) {
+  app.comp = ms / 1000;
+  $("#lat").value = String(ms);
+  $("#lat-val").textContent = String(ms);
+}
+
 // ---------- 歌唱ループ ----------
 function sample(t) {
   if (!app.analyser) return;
@@ -132,11 +144,11 @@ function sample(t) {
 }
 
 // 歌唱の生データを、お手本と同じ10ms刻みの配列にする
-function toGrid(usr, length) {
+function toGrid(usr, length, comp) {
   const g = new Float64Array(length).fill(NaN);
   for (let i = 0; i < usr.length; i++) {
-    const a = Math.round(usr[i].t / HOP);
-    const next = usr[i + 1] ? Math.round(usr[i + 1].t / HOP) : a + 1;
+    const a = Math.round((usr[i].t - comp) / HOP);
+    const next = usr[i + 1] ? Math.round((usr[i + 1].t - comp) / HOP) : a + 1;
     const gap = i + 1 < usr.length ? usr[i + 1].t - usr[i].t : 0;
     const end = gap > 0 && gap <= 0.05 ? next : a + 1;
     for (let k = a; k < end && k < length; k++) if (k >= 0) g[k] = usr[i].midi;
@@ -145,12 +157,13 @@ function toGrid(usr, length) {
 }
 
 // 歌唱中のリアルタイム判定（コンボ用・おおよそ）
-function liveJudge(t) {
-  if (t - app.lastJudgeAt < 0.12) return;
-  app.lastJudgeAt = t;
-  const idx = Math.round(t / HOP);
+// tNow は「実際に聞こえている時刻」（お手本の時刻と同じ軸）
+function liveJudge(tNow) {
+  if (tNow - app.lastJudgeAt < 0.12) return;
+  app.lastJudgeAt = tNow;
+  const idx = Math.round(tNow / HOP);
   const target = app.refMidi[idx];
-  const u = app.lastUser && t - app.lastUser.t < 0.15 ? app.lastUser.midi : null;
+  const u = app.lastUser && Math.abs(tNow - (app.lastUser.t - app.comp)) < 0.15 ? app.lastUser.midi : null;
   const judge = $("#judge");
   if (Number.isNaN(target) || u === null) {
     return;
@@ -219,11 +232,12 @@ function draw(t) {
   g.beginPath();
   let pen = false, prevT = -9;
   for (const p of app.usr) {
-    if (p.t < t - TIME_BACK - 0.1 || p.t > t + TIME_FWD) continue;
+    const pt = p.t - app.comp; // 聞こえている時刻に直す
+    if (pt < t - TIME_BACK - 0.1 || pt > t + TIME_FWD) continue;
     if (Number.isNaN(p.midi) || p.midi < app.lo - 2 || p.midi > app.hi + 2) { pen = false; continue; }
-    const x = xOf(p.t), y = yOf(p.midi);
-    if (!pen || p.t - prevT > 0.08) g.moveTo(x, y); else g.lineTo(x, y);
-    pen = true; prevT = p.t;
+    const x = xOf(pt), y = yOf(p.midi);
+    if (!pen || pt - prevT > 0.08) g.moveTo(x, y); else g.lineTo(x, y);
+    pen = true; prevT = pt;
   }
   g.stroke();
   g.shadowBlur = 0;
@@ -237,7 +251,7 @@ function draw(t) {
   // 現在のお手本音名
   const ref = app.refMidi[Math.round(t / HOP)];
   $("#ref-note").textContent = Number.isNaN(ref) ? "--" : midiName(ref);
-  const u = app.lastUser && t - app.lastUser.t < 0.2 ? app.lastUser.midi : null;
+  const u = app.lastUser && Math.abs(t - (app.lastUser.t - app.comp)) < 0.2 ? app.lastUser.midi : null;
   $("#live-note").textContent = u === null ? "--" : midiName(u);
 }
 
@@ -310,8 +324,9 @@ function beginPlaying() {
   app.audio.play().catch(() => { $("#play-msg").textContent = "再生を開始できませんでした。もう一度お試しください。"; });
   const loop = () => {
     if (!app.playing) return;
-    const t = app.audio.currentTime;
-    sample(t);
+    const raw = app.audio.currentTime;          // 再生位置（出力に送った時刻）
+    const t = Math.max(0, raw - app.outLat);    // 実際に聞こえている時刻
+    sample(raw);
     liveJudge(t);
     draw(t);
     updateLyrics(t);
@@ -331,7 +346,7 @@ function stopPlaying() {
 
 function finish() {
   stopPlaying();
-  const usrGrid = toGrid(app.usr, app.refMidi.length);
+  const usrGrid = toGrid(app.usr, app.refMidi.length, app.comp);
   const r = score(app.refMidi, usrGrid);
   saveBest(app.song.id, r);
   showResult(r);
@@ -426,6 +441,7 @@ function init() {
   $("#btn-back").addEventListener("click", () => { show("list"); renderList(); });
   $("#btn-retry").addEventListener("click", () => startSong(app.song));
   $("#guide-vol").addEventListener("input", (e) => { if (app.audio) app.audio.volume = Number(e.target.value); });
+  $("#lat").addEventListener("input", (e) => setComp(Number(e.target.value)));
   show("list");
   renderList();
 }
